@@ -93,17 +93,31 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
 	
 	public function transmitterPluginHtml(array $arr):string{
         $arr['html']=(isset($arr['html']))?$arr['html']:'';
-        
+        $formData=$this->oc['SourcePot\Datapool\Foundation\Element']->formProcessing(__CLASS__,__FUNCTION__);
+        // get the balance
         $balanceBtnArr=array('tag'=>'button','type'=>'submit','element-content'=>'Get balance','key'=>array('textCredentials'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
         $balanceMatrix=array(''=>array('Cmd'=>$balanceBtnArr,'Info'=>'Check your Messagebird credentials if this balance check fails'));
-        
-        $formData=$this->oc['SourcePot\Datapool\Foundation\Element']->formProcessing(__CLASS__,__FUNCTION__);
+        $smsMatrix=array();
         if (isset($formData['cmd']['textCredentials'])){
             $messageBird= new \MessageBird\Client($this->settings['Content']['key']);
             $balance=$messageBird->balance->read();
             $balanceMatrix=array('Balance'=>get_object_vars($balance));
+        } else if (isset($formData['cmd']['send'])){
+            $status=$this->entry2sms($formData['val'],TRUE);
+            if (isset($status['error'])){
+                $smsMatrix['Error']['Value']=$status['error'];
+            } else {
+                $smsMatrix['Success']['Value']='totalSentCount: '.$status['totalSentCount'];
+            }
         }
-        $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$balanceMatrix,'caption'=>'Balance','hideKeys'=>TRUE));
+        if ($this->oc['SourcePot\Datapool\Foundation\Access']->isContentAdmin()){
+            $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$balanceMatrix,'caption'=>'Balance','hideKeys'=>TRUE));
+        }
+        // Send message
+        $smsMatrix['Mobile number']['Value']=array('tag'=>'input','type'=>'text','value'=>'','key'=>array('Content','recipients'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
+        $smsMatrix['Message']['Value']=array('tag'=>'textarea','element-content'=>'I am a test message...','key'=>array('Content','body'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
+        $smsMatrix['']['Value']=array('tag'=>'button','type'=>'submit','element-content'=>'Send','key'=>array('send'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
+        $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$smsMatrix,'caption'=>'SMS test','hideHeader'=>TRUE));
         return $arr['html'];
     }
     
@@ -118,16 +132,33 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
 	*/
 	public function entry2sms($entry,$isDebugging=FALSE){
         $debugArr=array('entry'=>$entry);
+        // send message
+        $MessageBird= new \MessageBird\Client($this->settings['Content']['key']);
+        $Message= new \MessageBird\Objects\Message();
+        $Message->originator=$this->settings['Content']['originator'];
+        $Message->recipients=array($entry['Content']['recipients']);
+        $Message->body=$entry['Content']['body'];
+        try{
+            $result=$MessageBird->messages->create($Message);
+            $status=array('totalCount'=>$result->recipients->totalCount,
+                          'totalSentCount'=>$result->recipients->totalSentCount,
+                          'totalDeliveredCount'=>$result->recipients->totalDeliveredCount,
+                          'totalDeliveryFailedCount'=>$result->recipients->totalDeliveryFailedCount
+                          );
+        } catch (\MessageBird\Exceptions\AuthenticateException $e){
+            $status['error']='Wrong login';
+        } catch (\MessageBird\Exceptions\BalanceException $e){
+            $status['error']='No balance';
+        } catch (\Exception $e){
+            $status['error']=$e->getMessage();
+        }
         
-        
-        
-            
-            
         
 		if ($isDebugging){
+            $debugArr['status']=$status;
 			$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2file($debugArr);
 		}
-		return $success;
+		return $status;
 	}
 
 }
