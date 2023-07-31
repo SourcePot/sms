@@ -20,14 +20,15 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
 								 );
 
 	public $transmitterDef=array('Type'=>array('@tag'=>'p','@default'=>'settings receiver','@Read'=>'NO_R'),
-							  'Content'=>array('provider'=>array('@tag'=>'input','@type'=>'text','@default'=>'Messagebird','@excontainer'=>TRUE),
+							  'Content'=>array('provider'=>array('@tag'=>'p','@element-content'=>'Messagebird','@excontainer'=>TRUE),
 											   'id'=>array('@tag'=>'input','@type'=>'text','@default'=>'Add Messagebird id here...','@excontainer'=>TRUE),
 											   'key'=>array('@tag'=>'input','@type'=>'password','@default'=>'Add Messagebird key here...','@excontainer'=>TRUE),
 											   'originator'=>array('@tag'=>'input','@type'=>'text','@default'=>'Datapool','@excontainer'=>TRUE),
-											   'url'=>array('@tag'=>'input','@type'=>'text','@default'=>'https://rest.messagebird.com/','@excontainer'=>TRUE),
 											   'Save'=>array('@tag'=>'button','@value'=>'save','@element-content'=>'Save','@default'=>'save'),
 											),
 							);
+ 
+    private $settings=array();
  
     public function __construct($oc){
 		$this->oc=$oc;
@@ -39,6 +40,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
 		$this->oc=$oc;
 		$this->entryTemplate=$oc['SourcePot\Datapool\Foundation\Database']->getEntryTemplateCreateTable($this->entryTable,$this->entryTemplate);
 		$oc['SourcePot\Datapool\Foundation\Definitions']->addDefintion('!'.__CLASS__,$this->transmitterDef);
+        $this->settings=$this->getTransmitterSetting(__CLASS__);
 	}
 
 	public function getEntryTable(){
@@ -57,8 +59,10 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
 		if ($arr===TRUE){
 			return array('Category'=>'Admin','Emoji'=>'&phone;','Label'=>'SMS','Read'=>'ADMIN_R','Class'=>__CLASS__);
 		} else {
-            $html='Nothing here yet...';
-            $arr['toReplace']['{{content}}']=$html;
+            $arr['callingClass']=__CLASS__;
+            $arr['callingFunction']=__FUNCTION__;
+            $arr=$this->getTransmitterSettingsWidget($arr);
+            $arr['toReplace']['{{content}}']=$this->transmitterPluginHtml($arr);
 			return $arr;
 		}
 	}
@@ -89,7 +93,32 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
 	
 	public function transmitterPluginHtml(array $arr):string{
         $arr['html']=(isset($arr['html']))?$arr['html']:'';
-        $arr['html'].='I am the sms plugin...';
+        
+        $balanceBtnArr=array('tag'=>'button','type'=>'submit','element-content'=>'Get balance','key'=>array('textCredentials'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
+        $balanceMatrix=array(''=>array('Cmd'=>$balanceBtnArr,'Info'=>'Check your Messagebird credentials if this balance check fails'));
+        
+        $formData=$this->oc['SourcePot\Datapool\Foundation\Element']->formProcessing(__CLASS__,__FUNCTION__);
+        if (isset($formData['cmd']['textCredentials'])){
+            $messageBird= new \MessageBird\Client($this->settings['Content']['key']);
+            $balance=$messageBird->balance->read();
+            $balanceMatrix=array('Balance'=>get_object_vars($balance));
+        }
+        $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$balanceMatrix,'caption'=>'Balance','hideKeys'=>TRUE));
+        
+        /*
+        ["Content"]=>
+        array(3) {
+        ["id"]=>
+        string(36) "d2bc2126-b002-4793-918d-8309828a6e26"
+        ["key"]=>
+        string(25) "ylZcJ0YqncG7zqYoaKjqHk5ED"
+        ["originator"]=>
+        string(8) "Datapool"
+        */
+        
+        
+        
+        
         return $arr['html'];
     }
     
@@ -104,6 +133,12 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
 	*/
 	public function entry2sms($entry,$isDebugging=FALSE){
         $debugArr=array('entry'=>$entry);
+        
+        
+        
+            
+            
+        
 		if ($isDebugging){
 			$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2file($debugArr);
 		}
