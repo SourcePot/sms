@@ -104,21 +104,6 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
             $balanceMatrix=array('Balance'=>get_object_vars($balance));
         }
         $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$balanceMatrix,'caption'=>'Balance','hideKeys'=>TRUE));
-        
-        /*
-        ["Content"]=>
-        array(3) {
-        ["id"]=>
-        string(36) "d2bc2126-b002-4793-918d-8309828a6e26"
-        ["key"]=>
-        string(25) "ylZcJ0YqncG7zqYoaKjqHk5ED"
-        ["originator"]=>
-        string(8) "Datapool"
-        */
-        
-        
-        
-        
         return $arr['html'];
     }
     
