@@ -8,7 +8,7 @@
 */
 declare(strict_types=1);
 
-namespace SourcePot\Datapool\Tools;
+namespace SourcePot\Sms;
 
 class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datapool\Interfaces\App{
 	
