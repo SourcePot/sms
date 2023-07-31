@@ -82,10 +82,10 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
             $this->oc['SourcePot\Datapool\Foundation\Logging']->addLog(array('msg'=>'Failed to send sms: recipient mobile is empty','priority'=>11,'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));
         } else {
             $smsArr=$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2flat($entry['Content']);
-            $smsMsg=substr($entry['Name'].'|'.implode('|',$smsArr),0,255);
-            $entry=array();
-            $entry['Content']['recipient']=$flatRecipient[$flatUserContentKey];
-            $entry['Content']['body']=$smsMsg;
+            $smsMsg=implode('|',$smsArr);
+            $smsMsg=trim($entry['Name'].'|'.$smsMsg,'|');
+            $smsMsg=substr($smsMsg,0,255);
+            $entry=array('Content'=>array('recipient'=>$flatRecipient[$flatUserContentKey],'body'=>$smsMsg));
             $status=$this->entry2sms($entry,FALSE);
             if (empty($status['error'])){
                 $sentEntriesCount++;
