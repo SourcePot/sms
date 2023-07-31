@@ -73,7 +73,26 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
 	*/
     public function send(string $recipient,array $entry):int{
         $sentEntriesCount=0;
-        //$this->oc['SourcePot\Datapool\Foundation\Logging']->addLog(array('msg'=>'Failed to send email: recipient emal address missing','priority'=>11,'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));
+        $userEntryTable=$this->oc['SourcePot\Datapool\Foundation\User']->getEntryTable();
+        $recipient=$this->oc['SourcePot\Datapool\Foundation\Database']->entryById(array('Source'=>$userEntryTable,'EntryId'=>$recipient),TRUE);
+        $flatRecipient=$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2flat($recipient);
+        $sender=$this->oc['SourcePot\Datapool\Foundation\Database']->entryById(array('Source'=>$userEntryTable,'EntryId'=>$_SESSION['currentUser']['EntryId']),TRUE);
+        $flatUserContentKey=$this->getRelevantFlatUserContentKey();
+        if (empty($flatRecipient[$flatUserContentKey])){
+            $this->oc['SourcePot\Datapool\Foundation\Logging']->addLog(array('msg'=>'Failed to send sms: recipient mobile is empty','priority'=>11,'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));
+        } else {
+            $smsArr=$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2flat($entry['Content']);
+            $smsMsg=substr($entry['Name'].'|'.implode('|',$smsArr),0,255);
+            $entry=array();
+            $entry['Content']['recipient']=$flatRecipient[$flatUserContentKey];
+            $entry['Content']['body']=$smsMsg;
+            $status=$this->entry2sms($entry,FALSE);
+            if (empty($status['error'])){
+                $sentEntriesCount++;
+            } else {
+                $this->oc['SourcePot\Datapool\Foundation\Logging']->addLog(array('msg'=>'Failed to send sms: '.$status['error'],'priority'=>11,'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));    
+            }
+        }
         return $sentEntriesCount;
     }
 	
@@ -114,7 +133,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
             $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$balanceMatrix,'caption'=>'Balance','hideKeys'=>TRUE));
         }
         // Send message
-        $smsMatrix['Mobile number']['Value']=array('tag'=>'input','type'=>'text','value'=>'','key'=>array('Content','recipients'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
+        $smsMatrix['Mobile number']['Value']=array('tag'=>'input','type'=>'text','value'=>'','key'=>array('Content','recipient'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
         $smsMatrix['Message']['Value']=array('tag'=>'textarea','element-content'=>'I am a test message...','key'=>array('Content','body'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
         $smsMatrix['']['Value']=array('tag'=>'button','type'=>'submit','element-content'=>'Send','key'=>array('send'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
         $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$smsMatrix,'caption'=>'SMS test','hideHeader'=>TRUE));
@@ -123,7 +142,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
     
     public function getRelevantFlatUserContentKey():string{
         $S=$this->oc['SourcePot\Datapool\Tools\MiscTools']->getSeparator();
-		$flatUserContentKey='Content'.$S.'Contact details'.$S.'Email';
+		$flatUserContentKey='Content'.$S.'Contact details'.$S.'Mobile';
         return $flatUserContentKey;
     }
 
@@ -136,7 +155,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         $MessageBird= new \MessageBird\Client($this->settings['Content']['key']);
         $Message= new \MessageBird\Objects\Message();
         $Message->originator=$this->settings['Content']['originator'];
-        $Message->recipients=array($entry['Content']['recipients']);
+        $Message->recipients=array($entry['Content']['recipient']);
         $Message->body=$entry['Content']['body'];
         try{
             $result=$MessageBird->messages->create($Message);
