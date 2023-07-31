@@ -76,9 +76,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
 	private function getTransmitterSetting($callingClass){
 		$EntryId=preg_replace('/\W/','_','OUTBOX-'.$callingClass);
 		$setting=array('Class'=>__CLASS__,'EntryId'=>$EntryId);
-		$setting['Content']=array('Mailbox'=>'{mail.wallenhauer.com:993/imap/ssl/novalidate-cert/user=c@wallenhauer.com}',
-								  'User'=>'c@wallenhauer.com',
-								  'Password'=>'');
+		$setting['Content']=array();
 		return $this->oc['SourcePot\Datapool\Foundation\Filespace']->entryByIdCreateIfMissing($setting,TRUE);
 	}
 
