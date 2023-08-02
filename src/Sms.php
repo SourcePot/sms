@@ -81,21 +81,27 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         if (empty($flatRecipient[$flatUserContentKey])){
             $this->oc['SourcePot\Datapool\Foundation\Logging']->addLog(array('msg'=>'Failed to send sms: recipient mobile is empty','priority'=>11,'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));
         } else {
-            $smsArr=$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2flat($entry['Content']);
+            $name=(isset($entry['Name']))?$entry['Name']:'';
+            $smsArr=array('Name'=>$name)+$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2flat($entry['Content']);
             $smsMsg=implode('|',$smsArr);
-            $smsMsg=trim($entry['Name'].'|'.$smsMsg,'|');
-            $smsMsg=substr($smsMsg,0,255);
+            $smsMsg=substr($smsMsg,0,512);
             $entry=array('Content'=>array('recipient'=>$flatRecipient[$flatUserContentKey],'body'=>$smsMsg));
             $status=$this->entry2sms($entry,FALSE);
             if (empty($status['error'])){
                 $sentEntriesCount++;
             } else {
-                $this->oc['SourcePot\Datapool\Foundation\Logging']->addLog(array('msg'=>'Failed to send sms: '.$status['error'],'priority'=>11,'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));    
+                $this->oc['SourcePot\Datapool\Foundation\Logging']->addLog(array('msg'=>'Failed to send sms: '.$status['error'],'priority'=>12,'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));    
             }
         }
         return $sentEntriesCount;
     }
 	
+    public function getRelevantFlatUserContentKey():string{
+        $S=$this->oc['SourcePot\Datapool\Tools\MiscTools']->getSeparator();
+		$flatUserContentKey='Content'.$S.'Contact details'.$S.'Mobile';
+        return $flatUserContentKey;
+    }
+
 	private function getTransmitterSetting($callingClass){
 		$EntryId=preg_replace('/\W/','_','OUTBOX-'.$callingClass);
 		$setting=array('Class'=>__CLASS__,'EntryId'=>$EntryId);
@@ -116,36 +122,30 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         // get the balance
         $balanceBtnArr=array('tag'=>'button','type'=>'submit','element-content'=>'Get balance','key'=>array('textCredentials'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
         $balanceMatrix=array(''=>array('Cmd'=>$balanceBtnArr,'Info'=>'Check your Messagebird credentials if this balance check fails'));
-        $smsMatrix=array();
         if (isset($formData['cmd']['textCredentials'])){
             $messageBird= new \MessageBird\Client($this->settings['Content']['key']);
             $balance=$messageBird->balance->read();
             $balanceMatrix=array('Balance'=>get_object_vars($balance));
         } else if (isset($formData['cmd']['send'])){
-            $status=$this->entry2sms($formData['val'],TRUE);
-            if (isset($status['error'])){
-                $smsMatrix['Error']['Value']=$status['error'];
-            } else {
-                $smsMatrix['Success']['Value']='totalSentCount: '.$status['totalSentCount'];
+            $sentCount=$this->send($formData['val']['recipient'],$formData['val']);
+            if (!empty($sentCount)){
+                $this->oc['SourcePot\Datapool\Foundation\Logging']->addLog(array('msg'=>'SMS sent: '.$sentCount,'priority'=>11,'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));    
             }
         }
         if ($this->oc['SourcePot\Datapool\Foundation\Access']->isContentAdmin()){
             $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$balanceMatrix,'caption'=>'Balance','hideKeys'=>TRUE));
         }
         // Send message
-        $smsMatrix['Mobile number']['Value']=array('tag'=>'input','type'=>'text','value'=>'','key'=>array('Content','recipient'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
-        $smsMatrix['Message']['Value']=array('tag'=>'textarea','element-content'=>'I am a test message...','key'=>array('Content','body'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
-        $smsMatrix['']['Value']=array('tag'=>'button','type'=>'submit','element-content'=>'Send','key'=>array('send'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
-        $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$smsMatrix,'caption'=>'SMS test','hideHeader'=>TRUE));
+        $availableRecipients=$this->oc['SourcePot\Datapool\Foundation\User']->getUserOptions(array(),$this->getRelevantFlatUserContentKey());
+        $selectArr=array('callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__,'options'=>$availableRecipients,'key'=>array('recipient'));
+        $smsMatrix=array();
+        $smsMatrix['Recepient']['Value']=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->select($selectArr);
+        $smsMatrix['Message']['Value']=$this->oc['SourcePot\Datapool\Foundation\Element']->element(array('tag'=>'textarea','element-content'=>'I am a test message...','key'=>array('Content','Message'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));
+        $smsMatrix['']['Value']=$this->oc['SourcePot\Datapool\Foundation\Element']->element(array('tag'=>'button','type'=>'submit','element-content'=>'Send','key'=>array('send'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));
+        $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$smsMatrix,'caption'=>'SMS test','keep-element-content'=>TRUE,'hideHeader'=>TRUE));
         return $arr['html'];
     }
     
-    public function getRelevantFlatUserContentKey():string{
-        $S=$this->oc['SourcePot\Datapool\Tools\MiscTools']->getSeparator();
-		$flatUserContentKey='Content'.$S.'Contact details'.$S.'Mobile';
-        return $flatUserContentKey;
-    }
-
 	/**
 	* @return boolean
 	*/
@@ -171,8 +171,6 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         } catch (\Exception $e){
             $status['error']=$e->getMessage();
         }
-        
-        
 		if ($isDebugging){
             $debugArr['status']=$status;
 			$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2file($debugArr);
