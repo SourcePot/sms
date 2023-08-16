@@ -11,66 +11,66 @@ declare(strict_types=1);
 namespace SourcePot\Sms;
 
 class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datapool\Interfaces\App{
-	
-	private $oc;
-	
-	private $entryTable='';
-	private $entryTemplate=array('Read'=>array('index'=>FALSE,'type'=>'SMALLINT UNSIGNED','value'=>'ALL_MEMBER_R','Description'=>'This is the entry specific Read access setting. It is a bit-array.'),
-								 'Write'=>array('index'=>FALSE,'type'=>'SMALLINT UNSIGNED','value'=>'ALL_CONTENTADMIN_R','Description'=>'This is the entry specific Read access setting. It is a bit-array.'),
-								 );
+    
+    private $oc;
+    
+    private $entryTable='';
+    private $entryTemplate=array('Read'=>array('index'=>FALSE,'type'=>'SMALLINT UNSIGNED','value'=>'ALL_MEMBER_R','Description'=>'This is the entry specific Read access setting. It is a bit-array.'),
+                                 'Write'=>array('index'=>FALSE,'type'=>'SMALLINT UNSIGNED','value'=>'ALL_CONTENTADMIN_R','Description'=>'This is the entry specific Read access setting. It is a bit-array.'),
+                                 );
 
-	public $transmitterDef=array('Type'=>array('@tag'=>'p','@default'=>'settings receiver','@Read'=>'NO_R'),
-							  'Content'=>array('provider'=>array('@tag'=>'p','@element-content'=>'Messagebird','@excontainer'=>TRUE),
-											   'id'=>array('@tag'=>'input','@type'=>'text','@default'=>'Add Messagebird id here...','@excontainer'=>TRUE),
-											   'key'=>array('@tag'=>'input','@type'=>'password','@default'=>'Add Messagebird key here...','@excontainer'=>TRUE),
-											   'originator'=>array('@tag'=>'input','@type'=>'text','@default'=>'Datapool','@excontainer'=>TRUE),
-											   'Save'=>array('@tag'=>'button','@value'=>'save','@element-content'=>'Save','@default'=>'save'),
-											),
-							);
+    public $transmitterDef=array('Type'=>array('@tag'=>'p','@default'=>'settings receiver','@Read'=>'NO_R'),
+                              'Content'=>array('provider'=>array('@tag'=>'p','@element-content'=>'Messagebird','@excontainer'=>TRUE),
+                                               'id'=>array('@tag'=>'input','@type'=>'text','@default'=>'Add Messagebird id here...','@excontainer'=>TRUE),
+                                               'key'=>array('@tag'=>'input','@type'=>'password','@default'=>'Add Messagebird key here...','@excontainer'=>TRUE),
+                                               'originator'=>array('@tag'=>'input','@type'=>'text','@default'=>'Datapool','@excontainer'=>TRUE),
+                                               'Save'=>array('@tag'=>'button','@value'=>'save','@element-content'=>'Save','@default'=>'save'),
+                                            ),
+                            );
  
     private $settings=array();
  
     public function __construct($oc){
-		$this->oc=$oc;
-		$table=str_replace(__NAMESPACE__,'',__CLASS__);
-		$this->entryTable=strtolower(trim($table,'\\'));
-	}
-	
-	public function init($oc){
-		$this->oc=$oc;
-		$this->entryTemplate=$oc['SourcePot\Datapool\Foundation\Database']->getEntryTemplateCreateTable($this->entryTable,$this->entryTemplate);
-		$oc['SourcePot\Datapool\Foundation\Definitions']->addDefintion('!'.__CLASS__,$this->transmitterDef);
+        $this->oc=$oc;
+        $table=str_replace(__NAMESPACE__,'',__CLASS__);
+        $this->entryTable=strtolower(trim($table,'\\'));
+    }
+    
+    public function init($oc){
+        $this->oc=$oc;
+        $this->entryTemplate=$oc['SourcePot\Datapool\Foundation\Database']->getEntryTemplateCreateTable($this->entryTable,$this->entryTemplate);
+        $oc['SourcePot\Datapool\Foundation\Definitions']->addDefintion('!'.__CLASS__,$this->transmitterDef);
         $this->settings=$this->getTransmitterSetting(__CLASS__);
-	}
+    }
 
-	public function getEntryTable(){
-		return $this->entryTable;
-	}
-	
-	public function getEntryTemplate(){
-		return $this->entryTemplate;
-	}
+    public function getEntryTable(){
+        return $this->entryTable;
+    }
+    
+    public function getEntryTemplate(){
+        return $this->entryTemplate;
+    }
 
-	/**
+    /**
     * App interface functionality
-	* @return boolean
-	*/
-	public function run(array|bool $arr=TRUE):array{
-		if ($arr===TRUE){
-			return array('Category'=>'Admin','Emoji'=>'&phone;','Label'=>'SMS','Read'=>'ADMIN_R','Class'=>__CLASS__);
-		} else {
+    * @return boolean
+    */
+    public function run(array|bool $arr=TRUE):array{
+        if ($arr===TRUE){
+            return array('Category'=>'Admin','Emoji'=>'&phone;','Label'=>'SMS','Read'=>'ADMIN_R','Class'=>__CLASS__);
+        } else {
             $arr['callingClass']=__CLASS__;
             $arr['callingFunction']=__FUNCTION__;
             $arr=$this->getTransmitterSettingsWidget($arr);
             $arr['toReplace']['{{content}}']=$this->transmitterPluginHtml($arr);
-			return $arr;
-		}
-	}
+            return $arr;
+        }
+    }
 
-	/**
+    /**
     * Transmitter interface functionality
-	* @return boolean
-	*/
+    * @return boolean
+    */
     public function send(string $recipient,array $entry):int{
         $sentEntriesCount=0;
         $userEntryTable=$this->oc['SourcePot\Datapool\Foundation\User']->getEntryTable();
@@ -95,28 +95,28 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         }
         return $sentEntriesCount;
     }
-	
+    
     public function getRelevantFlatUserContentKey():string{
         $S=$this->oc['SourcePot\Datapool\Tools\MiscTools']->getSeparator();
-		$flatUserContentKey='Content'.$S.'Contact details'.$S.'Mobile';
+        $flatUserContentKey='Content'.$S.'Contact details'.$S.'Mobile';
         return $flatUserContentKey;
     }
 
-	private function getTransmitterSetting($callingClass){
-		$EntryId=preg_replace('/\W/','_','OUTBOX-'.$callingClass);
-		$setting=array('Class'=>__CLASS__,'EntryId'=>$EntryId);
-		$setting['Content']=array();
-		return $this->oc['SourcePot\Datapool\Foundation\Filespace']->entryByIdCreateIfMissing($setting,TRUE);
-	}
+    private function getTransmitterSetting($callingClass){
+        $EntryId=preg_replace('/\W/','_','OUTBOX-'.$callingClass);
+        $setting=array('Class'=>__CLASS__,'EntryId'=>$EntryId);
+        $setting['Content']=array();
+        return $this->oc['SourcePot\Datapool\Foundation\Filespace']->entryByIdCreateIfMissing($setting,TRUE);
+    }
 
-	private function getTransmitterSettingsWidget($arr){
-		$arr['html']=(isset($arr['html']))?$arr['html']:'';
-		$setting=$this->getTransmitterSetting($arr['callingClass']);
-		$arr['html'].=$this->oc['SourcePot\Datapool\Foundation\Definitions']->entry2form($setting,FALSE);
-		return $arr;
-	}
-	
-	public function transmitterPluginHtml(array $arr):string{
+    private function getTransmitterSettingsWidget($arr){
+        $arr['html']=(isset($arr['html']))?$arr['html']:'';
+        $setting=$this->getTransmitterSetting($arr['callingClass']);
+        $arr['html'].=$this->oc['SourcePot\Datapool\Foundation\Definitions']->entry2form($setting,FALSE);
+        return $arr;
+    }
+    
+    public function transmitterPluginHtml(array $arr):string{
         $arr['html']=(isset($arr['html']))?$arr['html']:'';
         $formData=$this->oc['SourcePot\Datapool\Foundation\Element']->formProcessing(__CLASS__,__FUNCTION__);
         // get the balance
@@ -146,10 +146,10 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         return $arr['html'];
     }
     
-	/**
-	* @return boolean
-	*/
-	public function entry2sms($entry,$isDebugging=FALSE){
+    /**
+    * @return boolean
+    */
+    public function entry2sms($entry,$isDebugging=FALSE){
         $debugArr=array('entry'=>$entry);
         // send message
         $MessageBird= new \MessageBird\Client($this->settings['Content']['key']);
@@ -171,12 +171,12 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         } catch (\Exception $e){
             $status['error']=$e->getMessage();
         }
-		if ($isDebugging){
+        if ($isDebugging){
             $debugArr['status']=$status;
-			$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2file($debugArr);
-		}
-		return $status;
-	}
+            $this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2file($debugArr);
+        }
+        return $status;
+    }
 
 }
 ?>
