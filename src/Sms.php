@@ -85,7 +85,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
             $smsArr=array('Name'=>$name)+$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2flat($entry['Content']);
             $smsMsg=implode(' | ',$smsArr);
             $smsMsg=substr($smsMsg,0,512);
-            $entry=array('Content'=>array('recipient'=>$flatRecipient[$flatUserContentKey],'body'=>$smsMsg));
+            $entry=array('Content'=>array('recipient'=>$flatRecipient[$flatUserContentKey],'body'=>trim($smsMsg,' |')));
             $status=$this->entry2sms($entry,FALSE);
             if (empty($status['error'])){
                 $sentEntriesCount++;
