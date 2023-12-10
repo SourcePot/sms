@@ -79,7 +79,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         $sender=$this->oc['SourcePot\Datapool\Foundation\Database']->entryById(array('Source'=>$userEntryTable,'EntryId'=>$_SESSION['currentUser']['EntryId']),TRUE);
         $flatUserContentKey=$this->getRelevantFlatUserContentKey();
         if (empty($flatRecipient[$flatUserContentKey])){
-            $this->oc['SourcePot\Datapool\Foundation\Logging']->addLog(array('msg'=>'Failed to send sms: recipient mobile is empty','priority'=>11,'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));
+            $this->oc['SourcePot\Datapool\Foundation\Logger']->log('warning','Failed to send sms: recipient mobile is empty');
         } else {
             $name=(isset($entry['Name']))?$entry['Name']:'';
             $smsArr=array('Name'=>$name)+$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2flat($entry['Content']);
@@ -90,7 +90,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
             if (empty($status['error'])){
                 $sentEntriesCount++;
             } else {
-                $this->oc['SourcePot\Datapool\Foundation\Logging']->addLog(array('msg'=>'Failed to send sms: '.$status['error'],'priority'=>12,'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));    
+                $this->oc['SourcePot\Datapool\Foundation\Logger']->log('error','Failed to send sms: {error}',array('error'=>$status['error']));    
             }
         }
         return $sentEntriesCount;
@@ -129,7 +129,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         } else if (isset($formData['cmd']['send'])){
             $sentCount=$this->send($formData['val']['recipient'],$formData['val']);
             if (!empty($sentCount)){
-                $this->oc['SourcePot\Datapool\Foundation\Logging']->addLog(array('msg'=>'SMS sent: '.$sentCount,'priority'=>11,'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));    
+                $this->oc['SourcePot\Datapool\Foundation\Logger']->log('notice','SMS sent: {sentCount}',array('sentCount'=>$sentCount));    
             }
         }
         if ($this->oc['SourcePot\Datapool\Foundation\Access']->isContentAdmin()){
