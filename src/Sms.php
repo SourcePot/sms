@@ -89,6 +89,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
             $status=$this->entry2sms($entry,FALSE);
             if (empty($status['error'])){
                 $sentEntriesCount++;
+                $this->oc['logger']->log('info','SMS sent to: {recipient}',array('recipient'=>$flatRecipient[$flatUserContentKey]));    
             } else {
                 $this->oc['logger']->log('error','Failed to send sms: {error}',array('error'=>$status['error']));    
             }
