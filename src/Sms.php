@@ -35,11 +35,16 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         $table=str_replace(__NAMESPACE__,'',__CLASS__);
         $this->entryTable=strtolower(trim($table,'\\'));
     }
-    
-    public function init($oc){
+
+    Public function loadOc(array $oc):void
+    {
         $this->oc=$oc;
-        $this->entryTemplate=$oc['SourcePot\Datapool\Foundation\Database']->getEntryTemplateCreateTable($this->entryTable,__CLASS__);
-        $oc['SourcePot\Datapool\Foundation\Definitions']->addDefintion('!'.__CLASS__,$this->transmitterDef);
+    }
+  
+    public function init()
+    {
+        $this->entryTemplate=$this->oc['SourcePot\Datapool\Foundation\Database']->getEntryTemplateCreateTable($this->entryTable,__CLASS__);
+        $this->oc['SourcePot\Datapool\Foundation\Definitions']->addDefintion('!'.__CLASS__,$this->transmitterDef);
         $this->settings=$this->getTransmitterSetting(__CLASS__);
     }
 
