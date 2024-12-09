@@ -139,7 +139,8 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
             }
         }
         if ($this->oc['SourcePot\Datapool\Foundation\Access']->isContentAdmin()){
-            $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$balanceMatrix,'caption'=>'Balance','hideKeys'=>TRUE,'keep-element-content'=>TRUE));
+            $balanceHtml=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$balanceMatrix,'caption'=>'Balance','hideKeys'=>TRUE,'keep-element-content'=>TRUE));
+            $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->app(array('icon'=>'SMS balance','html'=>$balanceHtml,'open'=>!empty(key($balanceMatrix))));
         }
         // Send message
         $availableRecipients=$this->oc['SourcePot\Datapool\Foundation\User']->getUserOptions(array(),$this->getRelevantFlatUserContentKey());
@@ -148,7 +149,9 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         $smsMatrix['Recepient']['Value']=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->select($selectArr);
         $smsMatrix['Message']['Value']=$this->oc['SourcePot\Datapool\Foundation\Element']->element(array('tag'=>'textarea','element-content'=>'I am a test message...','key'=>array('Content','Message'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));
         $smsMatrix['']['Value']=$this->oc['SourcePot\Datapool\Foundation\Element']->element(array('tag'=>'button','type'=>'submit','element-content'=>'Send','key'=>array('send'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));
-        $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$smsMatrix,'caption'=>'SMS test','keep-element-content'=>TRUE,'hideHeader'=>TRUE));
+        $smsHtml=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$smsMatrix,'caption'=>'SMS test','keep-element-content'=>TRUE,'hideHeader'=>TRUE));
+        //
+        $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->app(array('icon'=>'Create SMS','html'=>$smsHtml));
         return $arr['html'];
     }
     
