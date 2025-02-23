@@ -28,7 +28,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
                                             ),
                             );
  
-    private $settings=array();
+    private $settings=[];
  
     public function __construct($oc){
         $this->oc=$oc;
@@ -111,7 +111,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
     private function getTransmitterSetting($callingClass){
         $EntryId=preg_replace('/\W/','_','OUTBOX-'.$callingClass);
         $setting=array('Class'=>__CLASS__,'EntryId'=>$EntryId);
-        $setting['Content']=array();
+        $setting['Content']=[];
         return $this->oc['SourcePot\Datapool\Foundation\Filespace']->entryByIdCreateIfMissing($setting,TRUE);
     }
 
@@ -143,9 +143,9 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
             $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->app(array('icon'=>'SMS balance','html'=>$balanceHtml,'open'=>!empty(key($balanceMatrix))));
         }
         // Send message
-        $availableRecipients=$this->oc['SourcePot\Datapool\Foundation\User']->getUserOptions(array(),$this->getRelevantFlatUserContentKey());
+        $availableRecipients=$this->oc['SourcePot\Datapool\Foundation\User']->getUserOptions([],$this->getRelevantFlatUserContentKey());
         $selectArr=array('callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__,'options'=>$availableRecipients,'key'=>array('recipient'));
-        $smsMatrix=array();
+        $smsMatrix=[];
         $smsMatrix['Recepient']['Value']=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->select($selectArr);
         $smsMatrix['Message']['Value']=$this->oc['SourcePot\Datapool\Foundation\Element']->element(array('tag'=>'textarea','element-content'=>'I am a test message...','key'=>array('Content','Message'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));
         $smsMatrix['']['Value']=$this->oc['SourcePot\Datapool\Foundation\Element']->element(array('tag'=>'button','type'=>'submit','element-content'=>'Send','key'=>array('send'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));
