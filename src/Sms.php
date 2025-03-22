@@ -14,6 +14,8 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
     
     private $oc;
     
+    private const ENTRY_EXPIRATION_SEC=3600;
+
     private $entryTable='';
     private $entryTemplate=['Read'=>['index'=>FALSE,'type'=>'SMALLINT UNSIGNED','value'=>'ALL_MEMBER_R','Description'=>'This is the entry specific Read access setting. It is a bit-array.'],
                             'Write'=>['index'=>FALSE,'type'=>'SMALLINT UNSIGNED','value'=>'ALL_CONTENTADMIN_R','Description'=>'This is the entry specific Read access setting. It is a bit-array.'],
@@ -48,6 +50,13 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         $this->settings=$this->getTransmitterSetting(__CLASS__);
     }
 
+    public function job(array $vars):array
+    {
+        $messageBird= new \MessageBird\Client($this->settings['Content']['key']);
+        $balance=get_object_vars($messageBird->balance->read());
+        $this->oc['SourcePot\Datapool\Foundation\Signals']->updateSignal(__CLASS__,__FUNCTION__,'Balance ['.$balance['type'].']',$balance['amount'],'float');
+        return $vars;
+    }
     public function getEntryTable(){
         return $this->entryTable;
     }
@@ -94,9 +103,9 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
             $status=$this->entry2sms($entry,FALSE);
             if (empty($status['error'])){
                 $sentEntriesCount++;
-                $this->oc['logger']->log('info','SMS sent to: {recipient}',['recipient'=>$flatRecipient[$flatUserContentKey]]);    
+                $this->oc['logger']->log('info','SMS sent to: {recipient}',['recipient'=>$flatRecipient[$flatUserContentKey]]);
             } else {
-                $this->oc['logger']->log('error','Failed to send sms: {error}',$status['error']);    
+                $this->oc['logger']->log('error','Failed to send sms: {error}',$status['error']);
             }
         }
         return $sentEntriesCount;
@@ -159,11 +168,14 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
     * @return boolean
     */
     public function entry2sms($entry){
+        $entry['Source']=$this->getEntryTable();
+        $entry['Expires']=$this->oc['SourcePot\Datapool\Tools\MiscTools']->getDateTime('@'.strval(time()+self::ENTRY_EXPIRATION_SEC));
+        $entry['Name']=substr($entry['Content']['body'],0,10).'...';
         // send message
         $MessageBird= new \MessageBird\Client($this->settings['Content']['key']);
         $Message= new \MessageBird\Objects\Message();
-        $Message->originator=$this->settings['Content']['originator'];
-        $Message->recipients=[$entry['Content']['recipient']];
+        $Message->originator=$entry['Group']=$this->settings['Content']['originator'];
+        $Message->recipients=$entry['Folder']=[$entry['Content']['recipient']];
         $Message->body=$entry['Content']['body'];
         try{
             $result=$MessageBird->messages->create($Message);
@@ -172,6 +184,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
                     'totalDeliveredCount'=>$result->recipients->totalDeliveredCount,
                     'totalDeliveryFailedCount'=>$result->recipients->totalDeliveryFailedCount
                     ];
+            $this->oc['SourcePot\Datapool\Foundation\Database']->insertEntry($entry);
         } catch (\MessageBird\Exceptions\AuthenticateException $e){
             $status['error']='Wrong login';
         } catch (\MessageBird\Exceptions\BalanceException $e){
