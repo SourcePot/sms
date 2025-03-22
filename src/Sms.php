@@ -15,18 +15,18 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
     private $oc;
     
     private $entryTable='';
-    private $entryTemplate=array('Read'=>array('index'=>FALSE,'type'=>'SMALLINT UNSIGNED','value'=>'ALL_MEMBER_R','Description'=>'This is the entry specific Read access setting. It is a bit-array.'),
-                                 'Write'=>array('index'=>FALSE,'type'=>'SMALLINT UNSIGNED','value'=>'ALL_CONTENTADMIN_R','Description'=>'This is the entry specific Read access setting. It is a bit-array.'),
-                                 );
+    private $entryTemplate=['Read'=>['index'=>FALSE,'type'=>'SMALLINT UNSIGNED','value'=>'ALL_MEMBER_R','Description'=>'This is the entry specific Read access setting. It is a bit-array.'],
+                            'Write'=>['index'=>FALSE,'type'=>'SMALLINT UNSIGNED','value'=>'ALL_CONTENTADMIN_R','Description'=>'This is the entry specific Read access setting. It is a bit-array.'],
+                        ];
 
-    public $transmitterDef=array('Type'=>array('@tag'=>'p','@default'=>'settings receiver','@Read'=>'NO_R'),
-                              'Content'=>array('provider'=>array('@tag'=>'p','@element-content'=>'Messagebird','@excontainer'=>TRUE),
-                                               'id'=>array('@tag'=>'input','@type'=>'text','@default'=>'Add Messagebird id here...','@excontainer'=>TRUE),
-                                               'key'=>array('@tag'=>'input','@type'=>'password','@default'=>'Add Messagebird key here...','@excontainer'=>TRUE),
-                                               'originator'=>array('@tag'=>'input','@type'=>'text','@default'=>'Datapool','@excontainer'=>TRUE),
-                                               'Save'=>array('@tag'=>'button','@value'=>'save','@element-content'=>'Save','@default'=>'save'),
-                                            ),
-                            );
+    public $transmitterDef=['Type'=>['@tag'=>'p','@default'=>'settings receiver','@Read'=>'NO_R'],
+                            'Content'=>['provider'=>['@tag'=>'p','@element-content'=>'Messagebird','@excontainer'=>TRUE],
+                                        'id'=>['@tag'=>'input','@type'=>'text','@default'=>'Add Messagebird id here...','@excontainer'=>TRUE],
+                                        'key'=>['@tag'=>'input','@type'=>'password','@default'=>'Add Messagebird key here...','@excontainer'=>TRUE],
+                                        'originator'=>['@tag'=>'input','@type'=>'text','@default'=>'Datapool','@excontainer'=>TRUE],
+                                        'Save'=>['@tag'=>'button','@value'=>'save','@element-content'=>'Save','@default'=>'save'],
+                                    ],
+                                ];
  
     private $settings=[];
  
@@ -62,7 +62,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
     */
     public function run(array|bool $arr=TRUE):array{
         if ($arr===TRUE){
-            return array('Category'=>'Admin','Emoji'=>'&phone;','Label'=>'SMS','Read'=>'ADMIN_R','Class'=>__CLASS__);
+            return ['Category'=>'Admin','Emoji'=>'&phone;','Label'=>'SMS','Read'=>'ADMIN_R','Class'=>__CLASS__];
         } else {
             $arr['callingClass']=__CLASS__;
             $arr['callingFunction']=__FUNCTION__;
@@ -79,24 +79,24 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
     public function send(string $recipient,array $entry):int{
         $sentEntriesCount=0;
         $userEntryTable=$this->oc['SourcePot\Datapool\Foundation\User']->getEntryTable();
-        $recipient=$this->oc['SourcePot\Datapool\Foundation\Database']->entryById(array('Source'=>$userEntryTable,'EntryId'=>$recipient),TRUE);
+        $recipient=$this->oc['SourcePot\Datapool\Foundation\Database']->entryById(['Source'=>$userEntryTable,'EntryId'=>$recipient],TRUE);
         $flatRecipient=$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2flat($recipient);
-        $sender=$this->oc['SourcePot\Datapool\Foundation\Database']->entryById(array('Source'=>$userEntryTable,'EntryId'=>$_SESSION['currentUser']['EntryId']),TRUE);
+        $sender=$this->oc['SourcePot\Datapool\Foundation\Database']->entryById(['Source'=>$userEntryTable,'EntryId'=>$_SESSION['currentUser']['EntryId']],TRUE);
         $flatUserContentKey=$this->getRelevantFlatUserContentKey();
         if (empty($flatRecipient[$flatUserContentKey])){
             $this->oc['logger']->log('warning','Failed to send sms: recipient mobile is empty');
         } else {
             $name=(isset($entry['Name']))?$entry['Name']:'';
-            $smsArr=array('Name'=>$name)+$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2flat($entry['Content']);
+            $smsArr=['Name'=>$name]+$this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2flat($entry['Content']);
             $smsMsg=implode(' | ',$smsArr);
             $smsMsg=substr($smsMsg,0,512);
-            $entry=array('Content'=>array('recipient'=>$flatRecipient[$flatUserContentKey],'body'=>trim($smsMsg,' |')));
+            $entry=['Content'=>['recipient'=>$flatRecipient[$flatUserContentKey],'body'=>trim($smsMsg,' |')]];
             $status=$this->entry2sms($entry,FALSE);
             if (empty($status['error'])){
                 $sentEntriesCount++;
-                $this->oc['logger']->log('info','SMS sent to: {recipient}',array('recipient'=>$flatRecipient[$flatUserContentKey]));    
+                $this->oc['logger']->log('info','SMS sent to: {recipient}',['recipient'=>$flatRecipient[$flatUserContentKey]]);    
             } else {
-                $this->oc['logger']->log('error','Failed to send sms: {error}',array('error'=>$status['error']));    
+                $this->oc['logger']->log('error','Failed to send sms: {error}',$status['error']);    
             }
         }
         return $sentEntriesCount;
@@ -110,7 +110,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
 
     private function getTransmitterSetting($callingClass){
         $EntryId=preg_replace('/\W/','_','OUTBOX-'.$callingClass);
-        $setting=array('Class'=>__CLASS__,'EntryId'=>$EntryId);
+        $setting=['Class'=>__CLASS__,'EntryId'=>$EntryId];
         $setting['Content']=[];
         return $this->oc['SourcePot\Datapool\Foundation\Filespace']->entryByIdCreateIfMissing($setting,TRUE);
     }
@@ -126,63 +126,58 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         $arr['html']=(isset($arr['html']))?$arr['html']:'';
         $formData=$this->oc['SourcePot\Datapool\Foundation\Element']->formProcessing(__CLASS__,__FUNCTION__);
         // get the balance
-        $balanceBtnArr=array('tag'=>'button','type'=>'submit','element-content'=>'Get balance','key'=>array('textCredentials'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__);
-        $balanceMatrix=array(''=>array('Cmd'=>$balanceBtnArr,'Info'=>'Check your Messagebird credentials if this balance check fails'));
+        $balanceBtnArr=['tag'=>'button','type'=>'submit','element-content'=>'Get balance','key'=>['textCredentials'],'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__];
+        $balanceMatrix=[''=>['Cmd'=>$balanceBtnArr,'Info'=>'Check your Messagebird credentials if this balance check fails']];
         if (isset($formData['cmd']['textCredentials'])){
             $messageBird= new \MessageBird\Client($this->settings['Content']['key']);
             $balance=$messageBird->balance->read();
-            $balanceMatrix=array('Balance'=>get_object_vars($balance));
+            $balanceMatrix=['Balance'=>get_object_vars($balance)];
         } else if (isset($formData['cmd']['send'])){
             $sentCount=$this->send($formData['val']['recipient'],$formData['val']);
             if (!empty($sentCount)){
-                $this->oc['logger']->log('notice','SMS sent: {sentCount}',array('sentCount'=>$sentCount));    
+                $this->oc['logger']->log('notice','SMS sent: {sentCount}',['sentCount'=>$sentCount]);    
             }
         }
         if ($this->oc['SourcePot\Datapool\Foundation\Access']->isContentAdmin()){
-            $balanceHtml=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$balanceMatrix,'caption'=>'Balance','hideKeys'=>TRUE,'keep-element-content'=>TRUE));
-            $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->app(array('icon'=>'SMS balance','html'=>$balanceHtml,'open'=>!empty(key($balanceMatrix))));
+            $balanceHtml=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(['matrix'=>$balanceMatrix,'caption'=>'Balance','hideKeys'=>TRUE,'keep-element-content'=>TRUE]);
+            $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->app(['icon'=>'SMS balance','html'=>$balanceHtml,'open'=>!empty(key($balanceMatrix))]);
         }
         // Send message
         $availableRecipients=$this->oc['SourcePot\Datapool\Foundation\User']->getUserOptions([],$this->getRelevantFlatUserContentKey());
-        $selectArr=array('callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__,'options'=>$availableRecipients,'key'=>array('recipient'));
+        $selectArr=['callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__,'options'=>$availableRecipients,'key'=>['recipient']];
         $smsMatrix=[];
         $smsMatrix['Recepient']['Value']=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->select($selectArr);
-        $smsMatrix['Message']['Value']=$this->oc['SourcePot\Datapool\Foundation\Element']->element(array('tag'=>'textarea','element-content'=>'I am a test message...','key'=>array('Content','Message'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));
-        $smsMatrix['']['Value']=$this->oc['SourcePot\Datapool\Foundation\Element']->element(array('tag'=>'button','type'=>'submit','element-content'=>'Send','key'=>array('send'),'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__));
-        $smsHtml=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(array('matrix'=>$smsMatrix,'caption'=>'SMS test','keep-element-content'=>TRUE,'hideHeader'=>TRUE));
+        $smsMatrix['Message']['Value']=$this->oc['SourcePot\Datapool\Foundation\Element']->element(['tag'=>'textarea','element-content'=>'I am a test message...','key'=>['Content','Message'],'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__]);
+        $smsMatrix['']['Value']=$this->oc['SourcePot\Datapool\Foundation\Element']->element(['tag'=>'button','type'=>'submit','element-content'=>'Send','key'=>['send'],'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__]);
+        $smsHtml=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(['matrix'=>$smsMatrix,'caption'=>'SMS test','keep-element-content'=>TRUE,'hideHeader'=>TRUE]);
         //
-        $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->app(array('icon'=>'Create SMS','html'=>$smsHtml));
+        $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->app(['icon'=>'Create SMS','html'=>$smsHtml]);
         return $arr['html'];
     }
     
     /**
     * @return boolean
     */
-    public function entry2sms($entry,$isDebugging=FALSE){
-        $debugArr=array('entry'=>$entry);
+    public function entry2sms($entry){
         // send message
         $MessageBird= new \MessageBird\Client($this->settings['Content']['key']);
         $Message= new \MessageBird\Objects\Message();
         $Message->originator=$this->settings['Content']['originator'];
-        $Message->recipients=array($entry['Content']['recipient']);
+        $Message->recipients=[$entry['Content']['recipient']];
         $Message->body=$entry['Content']['body'];
         try{
             $result=$MessageBird->messages->create($Message);
-            $status=array('totalCount'=>$result->recipients->totalCount,
-                          'totalSentCount'=>$result->recipients->totalSentCount,
-                          'totalDeliveredCount'=>$result->recipients->totalDeliveredCount,
-                          'totalDeliveryFailedCount'=>$result->recipients->totalDeliveryFailedCount
-                          );
+            $status=['totalCount'=>$result->recipients->totalCount,
+                    'totalSentCount'=>$result->recipients->totalSentCount,
+                    'totalDeliveredCount'=>$result->recipients->totalDeliveredCount,
+                    'totalDeliveryFailedCount'=>$result->recipients->totalDeliveryFailedCount
+                    ];
         } catch (\MessageBird\Exceptions\AuthenticateException $e){
             $status['error']='Wrong login';
         } catch (\MessageBird\Exceptions\BalanceException $e){
             $status['error']='No balance';
         } catch (\Exception $e){
             $status['error']=$e->getMessage();
-        }
-        if ($isDebugging){
-            $debugArr['status']=$status;
-            $this->oc['SourcePot\Datapool\Tools\MiscTools']->arr2file($debugArr);
         }
         return $status;
     }
