@@ -4,7 +4,7 @@
 * @package Datapool
 * @author Carsten Wallenhauer <admin@datapool.info>
 * @copyright 2023 to today Carsten Wallenhauer
-* @license https://www.gnu.org/licenses/agpl-3.0.html AGPL-v3
+* @license https://opensource.org/license/mit/ MIT
 */
 declare(strict_types=1);
 

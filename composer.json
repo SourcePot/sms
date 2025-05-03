@@ -4,7 +4,7 @@
 	"description":"Datapool webpage SMS class implementing Transmitter and App interface",
 	"keywords":["SMS"],
 	"homepage":"https://datapool.info",
-	"license":"AGPL-3.0-or-later",
+	"license":"MIT",
 	"authors":[{"name":"Carsten Wallenhauer","email":"admin@datapool.info"}],
 	"require":{
 		"php":">=8.0",
