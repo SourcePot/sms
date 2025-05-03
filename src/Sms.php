@@ -52,9 +52,13 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
 
     public function job(array $vars):array
     {
-        $messageBird= new \MessageBird\Client($this->settings['Content']['key']);
-        $balance=get_object_vars($messageBird->balance->read());
-        $this->oc['SourcePot\Datapool\Foundation\Signals']->updateSignal(__CLASS__,__FUNCTION__,'Balance ['.$balance['type'].']',$balance['amount'],'float');
+        if (empty($this->settings['Content']['key'])){
+            $vars['error']='Credentials are empty';
+        } else {
+            $messageBird= new \MessageBird\Client($this->settings['Content']['key']);
+            $balance=get_object_vars($messageBird->balance->read());
+            $this->oc['SourcePot\Datapool\Foundation\Signals']->updateSignal(__CLASS__,__FUNCTION__,'Balance ['.$balance['type'].']',$balance['amount'],'float');
+        }
         return $vars;
     }
     public function getEntryTable(){
@@ -138,9 +142,13 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         $balanceBtnArr=['tag'=>'button','type'=>'submit','element-content'=>'Get balance','key'=>['textCredentials'],'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__];
         $balanceMatrix=[''=>['Cmd'=>$balanceBtnArr,'Info'=>'Check your Messagebird credentials if this balance check fails']];
         if (isset($formData['cmd']['textCredentials'])){
-            $messageBird= new \MessageBird\Client($this->settings['Content']['key']);
-            $balance=$messageBird->balance->read();
-            $balanceMatrix=['Balance'=>get_object_vars($balance)];
+            if (empty($this->settings['Content']['key'])){
+                $balanceMatrix=['Balance'=>['Error'=>'credentials are empty...']];
+            } else {
+                $messageBird= new \MessageBird\Client($this->settings['Content']['key']);
+                $balance=$messageBird->balance->read();
+                $balanceMatrix=['Balance'=>get_object_vars($balance)];
+            }
         } else if (isset($formData['cmd']['send'])){
             $sentCount=$this->send($formData['val']['recipient'],$formData['val']);
             if (!empty($sentCount)){
