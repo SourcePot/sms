@@ -1,8 +1,14 @@
 # Datapool App employing the MessageBird SMS service
 
-The Sms.php class implements the Datapool `Transmitter` and `App` interface. The App is part of the admin category. The App enables entering the user credentials for MessageBird, checking the balance and sending SMS Messages. 
+The Sms.php class implements the Datapool `Transmitter` and `App` interface. The App is part of the admin category. 
 
 ## The App
+
+The App enables entering the user to
+
+* credentials for MessageBird, 
+* checking the balance and 
+* sending SMS Messages
 
 See the following Datapool screenshot:
 
