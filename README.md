@@ -1,9 +1,9 @@
 # Datapool App employing the MessageBird SMS service
 
-The Sms.php class implements the Datapool `Transmitter` and `App` interface. The App is part of the admin category:
+The Sms.php class implements the Datapool `Transmitter` and `App` interface. The App is part of the admin category. The App enables entering the user credentials for MessageBird, checking the balance and sending SMS Messages. See following Datapool screenshot:
 
-<img src="./assets/app.png" alt="SMS admin page" style="width:60%"/>
+<img src="./assets/app.png" alt="SMS admin page" style="width:100%"/>
 
-The transmitter implemented by the Sms.php class is available wherever data needs to be sent, see the following example:
+The transmitter implemented by the Sms.php class is available wherever data needs to be sent out of Datappol. E.g. the Datapool processor "OutboxEntries" provides access to all registered transmitters. See the following example:
 
 <img src="./assets/transmitter.png" alt="sample transmitter use" style="width:100%"/>
