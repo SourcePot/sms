@@ -4,10 +4,10 @@ The Sms.php class implements the Datapool `Transmitter` and `App` interface. The
 
 ## The App
 
-The App enables entering the user to
+The App provides to the Datapool administrator:
 
-* credentials for MessageBird, 
-* checking the balance and 
+* editing credentials to access MessageBird, 
+* checking the balance with MassageBird and 
 * sending SMS Messages
 
 See the following Datapool screenshot:
