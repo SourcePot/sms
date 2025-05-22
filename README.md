@@ -1,4 +1,4 @@
-# Datapool App & Transmitter connecting to the MessageBird service
+# Connecting to the MessageBird service, Datapool App & Transmitter
 
 The Sms.php class implements the Datapool `Transmitter` and `App` interface. The App is part of the admin category. 
 
