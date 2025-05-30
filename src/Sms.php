@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace SourcePot\Sms;
 
-class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datapool\Interfaces\App{
+class Sms implements \SourcePot\Datapool\Interfaces\Transmitter{
     
     private $oc;
     
@@ -70,22 +70,6 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
     }
 
     /**
-    * App interface functionality
-    * @return boolean
-    */
-    public function run(array|bool $arr=TRUE):array{
-        if ($arr===TRUE){
-            return ['Category'=>'Admin','Emoji'=>'&phone;','Label'=>'SMS','Read'=>'ADMIN_R','Class'=>__CLASS__];
-        } else {
-            $arr['callingClass']=__CLASS__;
-            $arr['callingFunction']=__FUNCTION__;
-            $arr=$this->getTransmitterSettingsWidget($arr);
-            $arr['toReplace']['{{content}}']=$this->transmitterPluginHtml($arr);
-            return $arr;
-        }
-    }
-
-    /**
     * Transmitter interface functionality
     * @return boolean
     */
@@ -128,11 +112,11 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
         return $this->oc['SourcePot\Datapool\Foundation\Filespace']->entryByIdCreateIfMissing($setting,TRUE);
     }
 
-    private function getTransmitterSettingsWidget($arr){
-        $arr['html']=(isset($arr['html']))?$arr['html']:'';
+    private function getTransmitterSettingsWidgetHtml($arr):string
+    {
         $setting=$this->getTransmitterSetting($arr['callingClass']);
-        $arr['html'].=$this->oc['SourcePot\Datapool\Foundation\Definitions']->entry2form($setting,FALSE);
-        return $arr;
+        $html=$this->oc['SourcePot\Datapool\Foundation\Definitions']->entry2form($setting,FALSE);
+        return $html;
     }
     
     public function transmitterPluginHtml(array $arr):string{
@@ -156,6 +140,9 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter,\SourcePot\Datap
             }
         }
         if ($this->oc['SourcePot\Datapool\Foundation\Access']->isContentAdmin()){
+            $settingsHtml=$this->getTransmitterSettingsWidgetHtml(['callingClass'=>__CLASS__]);
+            $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->app(['icon'=>'SMS Settings','html'=>$settingsHtml]);
+            //
             $balanceHtml=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->table(['matrix'=>$balanceMatrix,'caption'=>'Balance','hideKeys'=>TRUE,'keep-element-content'=>TRUE]);
             $arr['html'].=$this->oc['SourcePot\Datapool\Tools\HTMLbuilder']->app(['icon'=>'SMS balance','html'=>$balanceHtml,'open'=>!empty(key($balanceMatrix))]);
         }
