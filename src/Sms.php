@@ -12,6 +12,7 @@ namespace SourcePot\Sms;
 
 class Sms implements \SourcePot\Datapool\Interfaces\Transmitter{
     
+    public const ONEDIMSEPARATOR='|[]|';
     private $oc;
     
     private const ENTRY_EXPIRATION_SEC=3600;
@@ -100,7 +101,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter{
     }
     
     public function getRelevantFlatUserContentKey():string{
-        $S=$this->oc['SourcePot\Datapool\Tools\MiscTools']->getSeparator();
+        $S=self::ONEDIMSEPARATOR;
         $flatUserContentKey='Content'.$S.'Contact details'.$S.'Mobile';
         return $flatUserContentKey;
     }
