@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace SourcePot\Sms;
 
-class Sms implements \SourcePot\Datapool\Interfaces\Transmitter{
+class Sms implements \SourcePot\Datapool\Interfaces\Job,\SourcePot\Datapool\Interfaces\Transmitter{
     
     public const ONEDIMSEPARATOR='|[]|';
     private $oc;
@@ -51,6 +51,11 @@ class Sms implements \SourcePot\Datapool\Interfaces\Transmitter{
         $this->settings=$this->getTransmitterSetting(__CLASS__);
     }
 
+    /**
+    * Housekeeping method periodically executed by job.php (this script should be called once per minute through a CRON-job)
+    * @param    string $vars Initial persistent data space
+    * @return   array  Array Updateed persistent data space
+    */
     public function job(array $vars):array
     {
         if (empty($this->settings['Content']['key'])){
