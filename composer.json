@@ -8,8 +8,7 @@
 	"authors":[{"name":"Carsten Wallenhauer","email":"admin@datapool.info"}],
 	"require":{
 		"php":">=8.0",
-        "messagebird/php-rest-api":">=v3.1.4",
-		"sourcepot/datapool":">=v4.21.0"
+        "messagebird/php-rest-api":">=v3.1.4"
 	},
 	"autoload":{
 		"psr-4":{
