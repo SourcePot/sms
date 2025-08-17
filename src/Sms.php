@@ -146,7 +146,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Job,\SourcePot\Datapool\Inte
                     $balance=$messageBird->balance->read();
                     $balanceMatrix=['Balance'=>get_object_vars($balance)];
                 } catch(\Exception $e){
-                    $balanceMatrix=['Balance'=>$e->getMessage()];
+                    $balanceMatrix=['Balance'=>['Error'=>$e->getMessage()]];
                 }
             }
         } else if (isset($formData['cmd']['send'])){
