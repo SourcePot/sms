@@ -12,9 +12,10 @@ namespace SourcePot\Sms;
 
 class Sms implements \SourcePot\Datapool\Interfaces\Job,\SourcePot\Datapool\Interfaces\Transmitter{
     
-    public const ONEDIMSEPARATOR='|[]|';
     private $oc;
     
+    public const ONEDIMSEPARATOR='|[]|';
+    public const MOBILE_KEYCOMPS=['Content','Contact details','Mobile'];
     private const ENTRY_EXPIRATION_SEC=3600;
 
     private $entryTable='';
@@ -112,8 +113,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Job,\SourcePot\Datapool\Inte
     }
     
     public function getRelevantFlatUserContentKey():string{
-        $S=self::ONEDIMSEPARATOR;
-        $flatUserContentKey='Content'.$S.'Contact details'.$S.'Mobile';
+        $flatUserContentKey=implode(self::ONEDIMSEPARATOR,self::MOBILE_KEYCOMPS);
         return $flatUserContentKey;
     }
 
@@ -205,6 +205,5 @@ class Sms implements \SourcePot\Datapool\Interfaces\Job,\SourcePot\Datapool\Inte
         }
         return $status;
     }
-
 }
 ?>
