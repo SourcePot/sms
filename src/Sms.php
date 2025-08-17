@@ -18,18 +18,20 @@ class Sms implements \SourcePot\Datapool\Interfaces\Job,\SourcePot\Datapool\Inte
     private const ENTRY_EXPIRATION_SEC=3600;
 
     private $entryTable='';
-    private $entryTemplate=['Read'=>['index'=>FALSE,'type'=>'SMALLINT UNSIGNED','value'=>'ALL_MEMBER_R','Description'=>'This is the entry specific Read access setting. It is a bit-array.'],
-                            'Write'=>['index'=>FALSE,'type'=>'SMALLINT UNSIGNED','value'=>'ALL_CONTENTADMIN_R','Description'=>'This is the entry specific Read access setting. It is a bit-array.'],
-                        ];
+    private $entryTemplate=[];
 
-    public $transmitterDef=['Type'=>['@tag'=>'p','@default'=>'settings receiver','@Read'=>'NO_R'],
-                            'Content'=>['provider'=>['@tag'=>'p','@element-content'=>'Messagebird','@excontainer'=>TRUE],
-                                        'id'=>['@tag'=>'input','@type'=>'text','@default'=>'Add Messagebird id here...','@excontainer'=>TRUE],
-                                        'key'=>['@tag'=>'input','@type'=>'password','@default'=>'Add Messagebird key here...','@excontainer'=>TRUE],
-                                        'originator'=>['@tag'=>'input','@type'=>'text','@default'=>'Datapool','@excontainer'=>TRUE],
-                                        'Save'=>['@tag'=>'button','@value'=>'save','@element-content'=>'Save','@default'=>'save'],
-                                    ],
-                                ];
+    public $transmitterDef=[
+        'Type'=>[
+            '@tag'=>'p','@default'=>'settings receiver','@Read'=>'NO_R'
+        ],
+        'Content'=>[
+            'provider'=>['@tag'=>'p','@element-content'=>'Messagebird','@excontainer'=>TRUE],
+            'id'=>['@tag'=>'input','@type'=>'text','@default'=>'Add Messagebird id here...','@excontainer'=>TRUE],
+            'key'=>['@tag'=>'input','@type'=>'password','@default'=>'Add Messagebird key here...','@excontainer'=>TRUE],
+            'originator'=>['@tag'=>'input','@type'=>'text','@default'=>'Datapool','@excontainer'=>TRUE],
+            'Save'=>['@tag'=>'button','@value'=>'save','@element-content'=>'Save','@default'=>'save'],
+        ],
+    ];
  
     private $settings=[];
  
@@ -61,8 +63,12 @@ class Sms implements \SourcePot\Datapool\Interfaces\Job,\SourcePot\Datapool\Inte
         if (empty($this->settings['Content']['key'])){
             $vars['error']='Credentials are empty';
         } else {
-            $messageBird= new \MessageBird\Client($this->settings['Content']['key']);
-            $balance=get_object_vars($messageBird->balance->read());
+            try{
+                $messageBird= new \MessageBird\Client($this->settings['Content']['key']);
+                $balance=get_object_vars($messageBird->balance->read());
+            } catch(\Exception $e){
+                $balance=['type'=>'string','amount'=>'NAN'];
+            }
             $this->oc['SourcePot\Datapool\Foundation\Signals']->updateSignal(__CLASS__,__FUNCTION__,'Balance ['.$balance['type'].']',$balance['amount'],'float');
         }
         return $vars;
@@ -99,7 +105,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Job,\SourcePot\Datapool\Inte
                 $sentEntriesCount++;
                 $this->oc['logger']->log('info','SMS sent to: {recipient}',['recipient'=>$flatRecipient[$flatUserContentKey]]);
             } else {
-                $this->oc['logger']->log('error','Failed to send sms: {error}',$status['error']);
+                $this->oc['logger']->log('error','Failed to send sms: {error}',$status);
             }
         }
         return $sentEntriesCount;
@@ -135,9 +141,13 @@ class Sms implements \SourcePot\Datapool\Interfaces\Job,\SourcePot\Datapool\Inte
             if (empty($this->settings['Content']['key'])){
                 $balanceMatrix=['Balance'=>['Error'=>'credentials are empty...']];
             } else {
-                $messageBird= new \MessageBird\Client($this->settings['Content']['key']);
-                $balance=$messageBird->balance->read();
-                $balanceMatrix=['Balance'=>get_object_vars($balance)];
+                try{
+                    $messageBird= new \MessageBird\Client($this->settings['Content']['key']);
+                    $balance=$messageBird->balance->read();
+                    $balanceMatrix=['Balance'=>get_object_vars($balance)];
+                } catch(\Exception $e){
+                    $balanceMatrix=['Balance'=>$e->getMessage()];
+                }
             }
         } else if (isset($formData['cmd']['send'])){
             $sentCount=$this->send($formData['val']['recipient'],$formData['val']);
