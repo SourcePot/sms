@@ -132,7 +132,7 @@ class Sms implements \SourcePot\Datapool\Interfaces\Job,\SourcePot\Datapool\Inte
     }
     
     public function transmitterPluginHtml(array $arr):string{
-        $arr['html']=(isset($arr['html']))?$arr['html']:'';
+        $arr['html']='';
         $formData=$this->oc['SourcePot\Datapool\Foundation\Element']->formProcessing(__CLASS__,__FUNCTION__);
         // get the balance
         $balanceBtnArr=['tag'=>'button','type'=>'submit','element-content'=>'Get balance','key'=>['textCredentials'],'callingClass'=>__CLASS__,'callingFunction'=>__FUNCTION__];
