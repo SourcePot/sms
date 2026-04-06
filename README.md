@@ -1,4 +1,4 @@
-# Connecting to the MessageBird service and usage as Transmitter
+# SMS Transmitter employing MessageBird API
 
 The *SourcePot\Sms\Sms*-class implements the Datapool `Transmitter` and `Job` interface. It is configurated by the "*Admin → Transmitter*"-App. The SMS job method creates a signal for the prepaid value.
 
