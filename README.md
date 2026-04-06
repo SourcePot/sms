@@ -1,21 +1,19 @@
-# Connecting to the MessageBird service, Datapool App & Transmitter
+# Connecting to the MessageBird service and usage as Transmitter
 
-The Sms.php class implements the Datapool `Transmitter` and `App` interface. The App is part of the admin category. 
+The *SourcePot\Sms\Sms*-class implements the Datapool `Transmitter` and `Job` interface. It is configurated by the "*Admin → Transmitter*"-App. The SMS job method creates a signal for the prepaid value.
 
-## The App
+## The *SourcePot\Sms\Sms*-class
 
-The App provides the Datapool administrator with HTML-forms for:
+The *SourcePot\Sms\Sms*-class provides HTML-forms for:
 
-* editing credentials to access MessageBird, 
-* checking the balance with MassageBird and 
-* sending SMS Messages
+* Editing credentials to access MessageBird, 
+* Checking the balance with MassageBird and 
+* Sending SMS Messages
 
 See the following Datapool screenshot:
 
-<img src="./assets/app.png" alt="SMS admin page" style="width:100%"/>
+![SMS Transmitter](/assets/admin_sms_transmitter.png "SMS admin page")
 
-## The Transmitter
+## The Transmitter of the *SourcePot\Sms\Sms*-class
 
-The transmitter implemented by the Sms.php class is available wherever data needs to be sent out of Datappol. E.g. the Datapool processor "OutboxEntries" provides access to all registered transmitters. See the following example:
-
-<img src="./assets/transmitter.png" alt="sample transmitter use" style="width:100%"/>
+The transmitter implemented by the *SourcePot\Sms\Sms*-class is available within Datapool in every context employing Transmitte such as the *OutboxEntries*-processor or signal trigger.
