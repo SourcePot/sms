@@ -16,4 +16,4 @@ See the following Datapool screenshot:
 
 ## The Transmitter of the *SourcePot\Sms\Sms*-class
 
-The transmitter implemented by the *SourcePot\Sms\Sms*-class is available within Datapool in every context employing Transmitte such as the *OutboxEntries*-processor or signal trigger.
+The Transmitter implemented by the *SourcePot\Sms\Sms*-class is available within Datapool in every context employing a Transmitter such as the *OutboxEntries*-processor or signal trigger.
